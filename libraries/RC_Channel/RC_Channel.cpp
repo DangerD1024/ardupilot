@@ -258,6 +258,10 @@ const AP_Param::GroupInfo RC_Channel::var_info[] = {
     // @Values{Copter, Rover, Plane}: 300:Scripting1, 301:Scripting2, 302:Scripting3, 303:Scripting4, 304:Scripting5, 305:Scripting6, 306:Scripting7, 307:Scripting8, 308:Scripting9, 309:Scripting10, 310:Scripting11, 311:Scripting12, 312:Scripting13, 313:Scripting14, 314:Scripting15, 315:Scripting16
     // @User: Standard
     AP_GROUPINFO_FRAME("OPTION",  6, RC_Channel, option, 0, AP_PARAM_FRAME_COPTER|AP_PARAM_FRAME_ROVER|AP_PARAM_FRAME_PLANE|AP_PARAM_FRAME_BLIMP),
+    
+    AP_GROUPINFO("DUP_CH", 7, RC_Channel, duplicate_channel, 0),
+
+    AP_GROUPINFO("SILENT_OVR", 8, RC_Channel, is_silent_overdrive, 0),
 
     AP_GROUPEND
 };
@@ -294,6 +298,10 @@ bool RC_Channel::get_reverse(void) const
 // read input from hal.rcin or overrides
 bool RC_Channel::update(void)
 {
+    if (rc().has_had_rc_receiver()){
+        original_radio_in = hal.rcin->read(ch_in);
+    }
+
     if (has_override() && !rc().option_is_enabled(RC_Channels::Option::IGNORE_OVERRIDES)) {
         radio_in = override_value;
     } else if (rc().has_had_rc_receiver() && !rc().option_is_enabled(RC_Channels::Option::IGNORE_RECEIVER)) {
@@ -500,7 +508,15 @@ void RC_Channel::set_override(const uint16_t v, const uint32_t timestamp_ms)
 
     last_override_time = timestamp_ms != 0 ? timestamp_ms : AP_HAL::millis();
     override_value = v;
-    rc().new_override_received();
+    
+    if (v > 1) {
+        radio_in = v;
+    }
+
+    // channel is not silent overdrive mark new overrides received like in old way
+    if (is_silent_overdrive == 0)  {
+        rc().new_override_received();
+    }
 }
 
 void RC_Channel::clear_override()

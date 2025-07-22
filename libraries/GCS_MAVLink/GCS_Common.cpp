@@ -2074,7 +2074,7 @@ bool GCS_MAVLINK::sending_mavlink1() const
 void GCS_MAVLINK::send_rc_channels() const
 {
     uint16_t values[18] = {};
-    rc().get_radio_in(values, ARRAY_SIZE(values));
+    rc().get_original_radio_in(values, ARRAY_SIZE(values));
 
     mavlink_msg_rc_channels_send(
         chan,
@@ -2116,7 +2116,7 @@ void GCS_MAVLINK::send_rc_channels_raw() const
     }
 
     uint16_t values[8] = {};
-    rc().get_radio_in(values, ARRAY_SIZE(values));
+    rc().get_original_radio_in(values, ARRAY_SIZE(values));
 
     mavlink_msg_rc_channels_raw_send(
         chan,

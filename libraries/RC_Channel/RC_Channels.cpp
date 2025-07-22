@@ -70,9 +70,31 @@ uint8_t RC_Channels::get_radio_in(uint16_t *chans, const uint8_t num_channels)
     return read_channels;
 }
 
+uint8_t RC_Channels::get_original_radio_in(uint16_t *chans, const uint8_t num_channels)
+{
+    memset(chans, 0, num_channels*sizeof(*chans));
+
+    const uint8_t read_channels = MIN(num_channels, NUM_RC_CHANNELS);
+    for (uint8_t i = 0; i < read_channels; i++) {
+        chans[i] = channel(i)->get_original_radio_in();
+    }
+
+    return read_channels;
+}
+
 // update all the input channels
 bool RC_Channels::read_input(void)
 {
+    uint16_t duplicate_channel = 0;
+
+    for (uint8_t i=0; i<NUM_RC_CHANNELS; i++) {
+        duplicate_channel = channel(i)->get_duplicate_channel();
+        
+        if (duplicate_channel != 0 && duplicate_channel < 16) {
+            channel(duplicate_channel - 1)->set_override(channel(i)->get_original_radio_in(), AP_HAL::millis());
+        }
+    }
+
     if (hal.rcin->new_input()) {
         _has_had_rc_receiver = true;
     } else if (!has_new_overrides) {

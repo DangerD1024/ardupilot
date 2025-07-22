@@ -17,6 +17,9 @@
 /// @brief	Object managing one RC channel
 class RC_Channel {
 public:
+    // overrides
+    uint16_t override_value;
+    uint32_t last_override_time;
     friend class RC_Channels;
     // Constructor
     RC_Channel(void);
@@ -104,6 +107,7 @@ public:
     ControlType get_type(void) const { return type_in; }
 
     AP_Int16    option; // e.g. activate EPM gripper / enable fence
+    AP_Int16 is_silent_overdrive;
 
     // auxiliary switch support
     void init_aux();
@@ -400,11 +404,20 @@ protected:
 
     // the input channel this corresponds to
     uint8_t ch_in;
+    int16_t get_duplicate_channel() {
+        return this->duplicate_channel;
+    };
+
+    int16_t get_original_radio_in() {
+        return this->original_radio_in;
+    };
 
 private:
 
     // pwm is stored here
     int16_t     radio_in;
+    int16_t     original_radio_in; // do not override IT !! NEVER
+    AP_Int16     duplicate_channel;       // channel
 
     // value generated from PWM normalised to configured scale
     int16_t    control_in;
@@ -418,10 +431,6 @@ private:
 
     ControlType type_in;
     int16_t     high_in;
-
-    // overrides
-    uint16_t override_value;
-    uint32_t last_override_time;
 
     int16_t pwm_to_angle() const;
     int16_t pwm_to_angle_dz(uint16_t dead_zone) const;
@@ -506,6 +515,9 @@ public:
 
     uint8_t get_radio_in(uint16_t *chans, const uint8_t num_channels); // reads a block of chanel radio_in values starting from channel 0
                                                                        // returns the number of valid channels
+
+    uint8_t get_original_radio_in(uint16_t *chans, const uint8_t num_channels); // reads a block of original (pre-override) radio_in values starting from channel 0
+                                                                                // returns the number of valid channels
 
     static uint8_t get_valid_channel_count(void);                      // returns the number of valid channels in the last read
     static int16_t get_receiver_rssi(void);                            // returns [0, 255] for receiver RSSI (0 is no link) if present, otherwise -1
