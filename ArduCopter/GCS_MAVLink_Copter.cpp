@@ -1155,7 +1155,7 @@ void GCS_MAVLINK_Copter::handle_mount_message(const mavlink_message_t &msg)
 #endif
 
 // this is called on receipt of a MANUAL_CONTROL packet and is
-// expected to call manual_override to override RC input on desired
+// expected to call RC_Channels::set_override to override RC input on desired
 // axes.
 void GCS_MAVLINK_Copter::handle_manual_control_axes(const mavlink_manual_control_t &packet, const uint32_t tnow)
 {
@@ -1163,10 +1163,18 @@ void GCS_MAVLINK_Copter::handle_manual_control_axes(const mavlink_manual_control
         return;
     }
 
-    manual_override(copter.channel_roll, packet.y, 1000, 2000, tnow);
-    manual_override(copter.channel_pitch, packet.x, 1000, 2000, tnow, true);
-    manual_override(copter.channel_throttle, packet.z, 0, 1000, tnow);
-    manual_override(copter.channel_yaw, packet.r, 1000, 2000, tnow);
+    // Convert joystick values (-1000 to +1000) to RC channel values (1000-2000)
+    // Roll: packet.y (-1000 to +1000) -> RC channel 0 (1000-2000)
+    RC_Channels::set_override(0, constrain_int16(packet.y + 1500, 1000, 2000), tnow);
+    
+    // Pitch: packet.x (-1000 to +1000) -> RC channel 1 (1000-2000)
+    RC_Channels::set_override(1, constrain_int16(packet.x + 1500, 1000, 2000), tnow);
+    
+    // Throttle: packet.z (0 to +1000) -> RC channel 2 (1000-2000)
+    RC_Channels::set_override(2, constrain_int16(packet.z + 1000, 1000, 2000), tnow);
+    
+    // Yaw: packet.r (-1000 to +1000) -> RC channel 3 (1000-2000)
+    RC_Channels::set_override(3, constrain_int16(packet.r + 1500, 1000, 2000), tnow);
 }
 
 // sanity check velocity or acceleration vector components are numbers
