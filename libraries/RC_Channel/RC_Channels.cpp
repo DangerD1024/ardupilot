@@ -99,6 +99,10 @@ bool RC_Channels::read_input(void)
         _has_had_rc_receiver = true;
     } else if (!has_new_overrides) {
         return false;
+    } else {
+        // If we have overrides but no physical RC receiver, we're using Mavlink RC
+        // Set the flag so the system knows we have RC input
+        _has_had_rc_receiver = true;
     }
 
     _has_ever_seen_rc_input = true;

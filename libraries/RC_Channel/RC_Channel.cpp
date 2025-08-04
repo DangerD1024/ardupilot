@@ -506,6 +506,17 @@ void RC_Channel::set_override(const uint16_t v, const uint32_t timestamp_ms)
         return;
     }
 
+    // If we're using Mavlink RC (no physical receiver), store the override value
+    // as the original value since the override IS the RC input
+    if (!rc().has_had_rc_receiver()) {
+        if (v > 1) {
+            original_radio_in = v;
+        } else if (v == 0) {
+            // Clear original value when override is cleared
+            original_radio_in = 0;
+        }
+    }
+
     last_override_time = timestamp_ms != 0 ? timestamp_ms : AP_HAL::millis();
     override_value = v;
     
